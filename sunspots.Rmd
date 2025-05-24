@@ -1,0 +1,98 @@
+---
+title: "黒点数の推移"
+output: html_notebook
+---
+
+黒点の月別数の推移
+
+データは、国立天文台の[黒点相対数の観測値](https://solarwww.mtk.nao.ac.jp/jp/db_sunspot.html)の[月平均値](https://solarwww.mtk.nao.ac.jp/mitaka_solar/sunspots/number/mtkmonthly.txt)
+
+このデータをExcelのデータに変換し、sunspotsに読み込む。
+
+```{r}
+library(readxl)
+# convert by sunspots2xls.py
+sunspots <- read_excel("sunspots_fixed.xlsx")
+#View(sunspots)
+str(sunspots)
+```
+
+グラフにする。
+
+
+```{r}
+library(tidyverse)  # install.packages("tidyverse")
+library(lubridate)
+library(viridis)
+
+# Date列を作成してグラフ描画
+df <- sunspots %>%
+  mutate(
+    Date = ymd(paste(Year, Month, "1", sep = "-"))
+  ) 
+  
+# カスタムカラー設定
+dot_color <- "#E25822"      # ソフトな太陽系レッド（赤橙）
+line_color <- "#CCCCCC"     # やわらかいグレー（線）
+
+# X軸の年をすべて表示するために breaks 作成
+year_breaks <- seq(from = year(min(df$Date)), to = year(max(df$Date)), by = 5)
+year_labels <- as.character(year_breaks)
+
+# グラフ描画
+ggplot(df, aes(x = Date, y = R_Total)) +
+  geom_line(color = line_color, size = 0.8) +
+  geom_point(color = dot_color, size = 2) +
+  scale_x_date(
+    breaks = ymd(paste0(year_breaks, "-01-01")),
+    labels = year_labels,
+    expand = c(0, 0)
+  ) +
+  labs(
+    title = "Sunspot Total (Raw) Over Time",
+    x = "Year",
+    y = "Total (Raw)"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+プロットの期間を2020年1月以降に限定する。
+
+```{r}
+limit = "2020-01-01"
+
+# Date列を作成してグラフ描画
+df <- sunspots %>%
+  mutate(
+    Date = ymd(paste(Year, Month, "1", sep = "-"))
+  ) %>% 
+  filter(Date >= ymd(limit))
+  
+# カスタムカラー設定
+dot_color <- "#E25822"      # ソフトな太陽系レッド（赤橙）
+line_color <- "#CCCCCC"     # やわらかいグレー（線）
+
+# X軸の年をすべて表示するために breaks 作成
+year_breaks <- seq(from = year(min(df$Date)), to = year(max(df$Date)), by = 1)
+year_labels <- as.character(year_breaks)
+
+# グラフ描画
+ggplot(df, aes(x = Date, y = R_Total)) +
+  geom_line(color = line_color, size = 0.8) +
+  geom_point(color = dot_color, size = 2) +
+  scale_x_date(
+    breaks = ymd(paste0(year_breaks, "-01-01")),
+    labels = year_labels,
+    expand = c(0, 0)
+  ) +
+  labs(
+    title = "Sunspots Total (Raw) Over Time (2020 and later)",
+    x = "Year",
+    y = "Total (Raw)"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
